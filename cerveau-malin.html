@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Cerveau Malin – Jeux de réflexion</title>
+<!-- Remplace ca-pub-XXXXXXXXXXXXXXXX par ton ID AdSense (ou utilise AdMob dans une app Android) -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+<style>
+:root{--ink:#1f2937;--c1:#6366f1;--c2:#22c55e;--c3:#f59e0b;--bg:#eef2ff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:system-ui,sans-serif;color:var(--ink);background:var(--bg);display:flex;flex-direction:column;align-items:center;min-height:100vh}
+.ad{width:100%;max-width:480px;min-height:60px;text-align:center}
+main{width:100%;max-width:480px;padding:8px 14px 20px}
+h1{text-align:center;font-size:22px;margin:8px 0}
+.tabs{display:flex;gap:6px}
+.tabs button{flex:1;border:0;border-radius:12px;padding:10px 4px;font-weight:700;background:#fff;box-shadow:0 2px 0 rgba(0,0,0,.15);font-size:14px}
+.tabs button.on{background:var(--c1);color:#fff}
+.panel{display:none;margin-top:12px}.panel.on{display:block}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+.btn{border:0;border-radius:12px;padding:10px 14px;font-weight:700;background:var(--c3);color:#fff;font-size:15px}
+.btn.g{background:var(--c2)}.btn.s{background:#94a3b8}
+.info{font-weight:700;margin:6px 0}
+.msg{min-height:28px;font-weight:800;color:#15803d;text-align:center;margin:6px 0}
+/* mémoire */
+.grid{display:grid;gap:8px}
+.card{aspect-ratio:1;border:0;border-radius:14px;font-size:34px;background:var(--c1);color:#fff;box-shadow:0 3px 0 #4338ca}
+.card.up{background:#fff;color:var(--ink);box-shadow:0 3px 0 #cbd5e1}
+.card.ok{background:#bbf7d0;box-shadow:none}
+/* code secret */
+.hrow{display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:12px;padding:6px 10px;margin-bottom:6px;font-size:26px}
+.hrow small{font-size:14px;font-weight:700}
+.slot{display:inline-block;width:40px;height:40px;border-radius:50%;border:2px dashed #94a3b8;text-align:center;line-height:36px;margin-right:4px;font-size:26px}
+.pal{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.pal button{border:0;background:#fff;border-radius:50%;width:48px;height:48px;font-size:30px;box-shadow:0 2px 0 rgba(0,0,0,.2)}
+/* taquin */
+.tq{display:grid;gap:6px;background:#c7d2fe;padding:8px;border-radius:16px}
+.tile{aspect-ratio:1;border:0;border-radius:12px;font-size:26px;font-weight:800;background:#fff;color:var(--c1);box-shadow:0 3px 0 #a5b4fc}
+.tile.e{background:transparent;box-shadow:none}
+.foot{font-size:12px;text-align:center;opacity:.7;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="ad"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="1111111111" data-ad-format="horizontal" data-full-width-responsive="true"></ins></div>
+<main>
+<h1>🧠 Cerveau Malin</h1>
+<div class="tabs">
+  <button class="on" data-t="mem">🃏 Mémoire</button>
+  <button data-t="code">🔐 Code secret</button>
+  <button data-t="tq">🔢 Taquin</button>
+</div>
+
+<!-- MEMOIRE -->
+<section class="panel on" id="mem">
+  <div class="row">
+    <button class="btn g" data-p="6">Facile</button>
+    <button class="btn" data-p="8">Normal</button>
+    <button class="btn s" data-p="10">Difficile</button>
+  </div>
+  <div class="info" id="memInfo"></div>
+  <div class="grid" id="memGrid"></div>
+  <div class="msg" id="memMsg"></div>
+</section>
+
+<!-- CODE SECRET -->
+<section class="panel" id="code">
+  <div class="row">
+    <button class="btn g" data-c="3,4,8">Facile</button>
+    <button class="btn" data-c="4,6,10">Normal</button>
+    <button class="btn s" data-c="5,7,12">Difficile</button>
+  </div>
+  <div class="info" id="codeInfo"></div>
+  <div id="hist"></div>
+  <div class="hrow" id="cur"></div>
+  <div class="pal" id="pal"></div>
+  <div class="row"><button class="btn s" id="del">⌫ Effacer</button><button class="btn g" id="ok">Valider ✔</button></div>
+  <div class="msg" id="codeMsg"></div>
+  <div class="foot">✅ = bonne couleur bien placée • 🔸 = bonne couleur mal placée</div>
+</section>
+
+<!-- TAQUIN -->
+<section class="panel" id="tq">
+  <div class="row">
+    <button class="btn g" data-n="3">3×3</button>
+    <button class="btn" data-n="4">4×4</button>
+  </div>
+  <div class="info" id="tqInfo"></div>
+  <div class="tq" id="tqGrid"></div>
+  <div class="msg" id="tqMsg"></div>
+  <div class="foot">Remets les nombres dans l'ordre : 1, 2, 3… Touche une case à côté du vide pour la glisser.</div>
+</section>
+
+<div class="foot">Jeux gratuits pour toute la famille • Aucune somme d'argent réelle</div>
+</main>
+<div class="ad"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="2222222222" data-ad-format="horizontal" data-full-width-responsive="true"></ins></div>
+
+<script>
+(function(){try{(adsbygoogle=window.adsbygoogle||[]).push({});(adsbygoogle=window.adsbygoogle||[]).push({});}catch(e){}})();
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const load=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+let best=load('cm_best',{});
+const rnd=n=>Math.floor(Math.random()*n);
+
+/* onglets */
+$$('.tabs button').forEach(b=>b.onclick=()=>{
+  $$('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  $$('.panel').forEach(p=>p.classList.toggle('on',p.id===b.dataset.t));
+});
+
+/* ===== MEMOIRE ===== */
+const EM=['🐘','🦁','🐒','🦒','🐢','🦓','🐊','🦜','🐸','🐙'];
+let M;
+function memStart(pairs){
+  const ic=EM.slice(0,pairs);
+  M={cards:[...ic,...ic].sort(()=>Math.random()-.5),up:[],done:{},found:0,moves:0,lock:false,pairs,t0:0};
+  $('#memMsg').textContent='';memDraw();
+}
+function memDraw(){
+  const g=$('#memGrid'); g.style.gridTemplateColumns=`repeat(${M.pairs===10?5:4},1fr)`; g.innerHTML='';
+  M.cards.forEach((c,i)=>{
+    const b=document.createElement('button');
+    const shown=M.up.includes(i)||M.done[i];
+    b.className='card'+(M.done[i]?' ok':shown?' up':'');
+    b.textContent=shown?c:'?'; b.onclick=()=>memTap(i); g.appendChild(b);
+  });
+  const k='mem'+M.pairs;
+  $('#memInfo').textContent=`Coups : ${M.moves}  •  Record : ${best[k]??'—'}`;
+}
+function memTap(i){
+  if(M.lock||M.up.includes(i)||M.done[i])return;
+  if(!M.t0)M.t0=Date.now();
+  M.up.push(i);
+  if(M.up.length===2){
+    M.moves++;const[a,b]=M.up;
+    if(M.cards[a]===M.cards[b]){M.done[a]=M.done[b]=true;M.found++;M.up=[];
+      if(M.found===M.pairs){
+        const k='mem'+M.pairs,s=Math.round((Date.now()-M.t0)/1000);
+        let t=`🎉 Bravo ! ${M.moves} coups en ${s} s.`;
+        if(best[k]==null||M.moves<best[k]){best[k]=M.moves;save('cm_best',best);t+=' Nouveau record !';}
+        $('#memMsg').textContent=t;
+      }
+    }else{M.lock=true;memDraw();setTimeout(()=>{M.up=[];M.lock=false;memDraw()},800);return;}
+  }
+  memDraw();
+}
+$$('#mem [data-p]').forEach(b=>b.onclick=()=>memStart(+b.dataset.p));
+
+/* ===== CODE SECRET ===== */
+const COL=['🔴','🟠','🟡','🟢','🔵','🟣','🟤','⚫'];
+let C;
+function codeStart(len,cols,tries){
+  C={len,cols,tries,secret:Array.from({length:len},()=>rnd(cols)),hist:[],cur:[],over:false};
+  $('#codeMsg').textContent='';codeDraw();
+}
+function codeDraw(){
+  $('#codeInfo').textContent=`Trouve le code de ${C.len} couleurs • Essai ${Math.min(C.hist.length+1,C.tries)}/${C.tries}`;
+  $('#hist').innerHTML=C.hist.map(h=>`<div class="hrow"><span>${h.g.map(i=>COL[i]).join('')}</span><small>${'✅'.repeat(h.b)}${'🔸'.repeat(h.w)}</small></div>`).join('');
+  $('#cur').innerHTML=Array.from({length:C.len},(_,i)=>`<span class="slot">${C.cur[i]!=null?COL[C.cur[i]]:''}</span>`).join('');
+  $('#pal').innerHTML='';
+  for(let i=0;i<C.cols;i++){const b=document.createElement('button');b.textContent=COL[i];
+    b.onclick=()=>{if(!C.over&&C.cur.length<C.len){C.cur.push(i);codeDraw()}};$('#pal').appendChild(b);}
+}
+$('#del').onclick=()=>{if(!C.over){C.cur.pop();codeDraw()}};
+$('#ok').onclick=()=>{
+  if(C.over)return;
+  if(C.cur.length<C.len){$('#codeMsg').textContent='Complète toutes les cases.';return;}
+  $('#codeMsg').textContent='';
+  const s=[...C.secret],g=[...C.cur];let b=0,w=0;
+  for(let i=0;i<C.len;i++)if(g[i]===s[i]){b++;g[i]=s[i]=-1;}
+  for(let i=0;i<C.len;i++){if(g[i]<0)continue;const j=s.indexOf(g[i]);if(j>=0){w++;s[j]=-1;}}
+  C.hist.push({g:[...C.cur],b,w});C.cur=[];
+  if(b===C.len){C.over=true;$('#codeMsg').textContent=`🎉 Bravo ! Trouvé en ${C.hist.length} essai(s).`;}
+  else if(C.hist.length>=C.tries){C.over=true;$('#codeMsg').textContent='Perdu ! Le code était : '+C.secret.map(i=>COL[i]).join('');}
+  codeDraw();
+};
+$$('#code [data-c]').forEach(b=>b.onclick=()=>codeStart(...b.dataset.c.split(',').map(Number)));
+
+/* ===== TAQUIN ===== */
+let T;
+function tqStart(n){
+  const t=[...Array(n*n).keys()].map(i=>(i+1)%(n*n)); // 1..n*n-1, 0 = vide
+  let e=n*n-1,prev=-1;
+  for(let k=0;k<n*n*30;k++){
+    const r=Math.floor(e/n),c=e%n,opts=[];
+    if(r>0)opts.push(e-n);if(r<n-1)opts.push(e+n);if(c>0)opts.push(e-1);if(c<n-1)opts.push(e+1);
+    const o=opts.filter(x=>x!==prev),m=o[rnd(o.length)];
+    t[e]=t[m];t[m]=0;prev=e;e=m;
+  }
+  T={n,t,moves:0,over:false};$('#tqMsg').textContent='';tqDraw();
+}
+function tqDraw(){
+  const g=$('#tqGrid');g.style.gridTemplateColumns=`repeat(${T.n},1fr)`;g.innerHTML='';
+  T.t.forEach((v,i)=>{const b=document.createElement('button');b.className='tile'+(v?'':' e');b.textContent=v||'';b.onclick=()=>tqTap(i);g.appendChild(b);});
+  $('#tqInfo').textContent=`Coups : ${T.moves}  •  Record : ${best['tq'+T.n]??'—'}`;
+}
+function tqTap(i){
+  if(T.over||!T.t[i])return;
+  const n=T.n,e=T.t.indexOf(0),r1=Math.floor(i/n),c1=i%n,r2=Math.floor(e/n),c2=e%n;
+  if(Math.abs(r1-r2)+Math.abs(c1-c2)!==1)return;
+  T.t[e]=T.t[i];T.t[i]=0;T.moves++;
+  if(T.t.every((v,k)=>k===n*n-1?v===0:v===k+1)){
+    T.over=true;const k='tq'+n;let m=`🎉 Bravo ! Résolu en ${T.moves} coups.`;
+    if(best[k]==null||T.moves<best[k]){best[k]=T.moves;save('cm_best',best);m+=' Nouveau record !';}
+    $('#tqMsg').textContent=m;
+  }
+  tqDraw();
+}
+$$('#tq [data-n]').forEach(b=>b.onclick=()=>tqStart(+b.dataset.n));
+
+memStart(6);codeStart(4,6,10);tqStart(3);
+</script>
+</body>
+</html>
