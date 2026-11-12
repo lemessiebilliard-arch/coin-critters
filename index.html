@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Coin Critters – Jeu de pièces</title>
+<!-- 1) Remplace ca-pub-XXXXXXXXXXXXXXXX par ton ID éditeur AdSense (après validation de ton site) -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+<style>
+:root{--bg1:#38bdf8;--bg2:#a7f3d0;--card:#fff;--ink:#1f2937;--gold:#f59e0b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:system-ui,sans-serif;color:var(--ink);background:linear-gradient(var(--bg1),var(--bg2));min-height:100vh;display:flex;flex-direction:column;align-items:center}
+.ad{width:100%;max-width:480px;min-height:60px;text-align:center;background:rgba(255,255,255,.35)}
+main{width:100%;max-width:480px;padding:10px 14px;flex:1}
+.top{display:flex;justify-content:space-between;gap:8px;font-weight:700}
+.pill{background:var(--card);border-radius:999px;padding:8px 14px;box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.village{background:var(--card);border-radius:18px;padding:12px;margin:12px 0;box-shadow:0 3px 0 rgba(0,0,0,.15)}
+.village h2{margin:0 0 8px;font-size:17px}
+.b{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-top:1px solid #eee}
+.b button{border:0;border-radius:10px;padding:8px 10px;font-weight:700;background:var(--gold);color:#fff}
+.b button:disabled{background:#cbd5e1}
+.slot{background:#7c3aed;border-radius:20px;padding:14px;box-shadow:0 4px 0 #5b21b6;text-align:center}
+.reels{display:flex;gap:8px;justify-content:center}
+.reel{background:#fff;border-radius:14px;width:30%;height:90px;font-size:52px;display:flex;align-items:center;justify-content:center}
+.spin{margin-top:12px;width:100%;border:0;border-radius:16px;padding:16px;font-size:20px;font-weight:800;background:#22c55e;color:#fff;box-shadow:0 4px 0 #15803d}
+.spin:active{transform:translateY(3px);box-shadow:0 1px 0 #15803d}
+.spin:disabled{background:#94a3b8;box-shadow:0 4px 0 #64748b}
+#msg{min-height:24px;margin-top:8px;font-weight:700;color:#fff}
+.small{font-size:12px;text-align:center;opacity:.8;margin:8px 0}
+@keyframes shake{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.spinning{animation:shake .15s infinite}
+</style>
+</head>
+<body>
+
+<!-- Bannière haut : remplace data-ad-slot par ton bloc d'annonces -->
+<div class="ad"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="1111111111" data-ad-format="horizontal" data-full-width-responsive="true"></ins></div>
+
+<main>
+  <div class="top">
+    <div class="pill">🪙 <span id="coins">0</span></div>
+    <div class="pill">⚡ <span id="spins">0</span>/<span id="max">0</span> <small id="timer"></small></div>
+    <div class="pill">🛡️ <span id="shield">0</span></div>
+  </div>
+
+  <div class="village">
+    <h2>🏘️ Village <span id="vnum">1</span></h2>
+    <div id="buildings"></div>
+  </div>
+
+  <div class="slot">
+    <div class="reels"><div class="reel" id="r0">🦊</div><div class="reel" id="r1">🦊</div><div class="reel" id="r2">🦊</div></div>
+    <button class="spin" id="spinBtn">TOURNER !</button>
+    <div id="msg"></div>
+  </div>
+  <div class="small">Jeu gratuit • Aucune somme d'argent réelle n'est gagnée ou perdue.</div>
+</main>
+
+<!-- Bannière bas -->
+<div class="ad"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="2222222222" data-ad-format="horizontal" data-full-width-responsive="true"></ins></div>
+
+<script>
+(function(){try{(adsbygoogle=window.adsbygoogle||[]).push({});(adsbygoogle=window.adsbygoogle||[]).push({});}catch(e){}})();
+
+const SYM=['🪙','⚡','🛡️','🔨','🐷','🦊'];
+const NAMES=['Cabane','Moulin','Pont','Fontaine','Château'];
+const MAX_SPINS=50, REGEN_MS=5*60*1000/5; // 1 spin / minute
+let S;
+try{S=JSON.parse(localStorage.getItem('cc')||'null')}catch(e){}
+S=S||{coins:500,spins:20,shield:0,village:1,lv:[0,0,0,0,0],last:Date.now()};
+const $=id=>document.getElementById(id);
+const cost=(i,l)=>Math.round((200+i*150)*Math.pow(1.6,l)*S.village);
+const save=()=>{try{localStorage.setItem('cc',JSON.stringify(S))}catch(e){}};
+
+function regen(){
+  const now=Date.now(),n=Math.floor((now-S.last)/60000);
+  if(n>0){ if(S.spins<MAX_SPINS)S.spins=Math.min(MAX_SPINS,S.spins+n); S.last+=n*60000; }
+}
+function render(){
+  $('coins').textContent=S.coins.toLocaleString('fr');
+  $('spins').textContent=S.spins; $('max').textContent=MAX_SPINS;
+  $('shield').textContent=S.shield; $('vnum').textContent=S.village;
+  $('spinBtn').disabled=busy||S.spins<1;
+  const box=$('buildings'); box.innerHTML='';
+  NAMES.forEach((n,i)=>{
+    const l=S.lv[i],done=l>=3,c=cost(i,l);
+    const d=document.createElement('div');d.className='b';
+    d.innerHTML=`<span>${['🛖','🌾','🌉','⛲','🏰'][i]} ${n} — Niv. ${l}/3</span>`;
+    const b=document.createElement('button');
+    b.textContent=done?'✔':'🪙 '+c.toLocaleString('fr');
+    b.disabled=done||S.coins<c;
+    b.onclick=()=>{S.coins-=c;S.lv[i]++;
+      if(S.lv.every(x=>x>=3)){S.village++;S.lv=[0,0,0,0,0];S.coins+=1000*S.village;S.spins=Math.min(MAX_SPINS,S.spins+10);msg('🎉 Village terminé ! +10 tours');}
+      save();render();};
+    d.appendChild(b);box.appendChild(d);
+  });
+  const next=60-Math.floor(((Date.now()-S.last)/1000));
+  $('timer').textContent=S.spins<MAX_SPINS?'('+Math.max(0,next)+'s)':'';
+}
+function msg(t){$('msg').textContent=t}
+let busy=false;
+function pick(){ // pondération
+  const r=Math.random();
+  if(r<.30)return 0; if(r<.48)return 1; if(r<.60)return 2;
+  if(r<.72)return 3; if(r<.82)return 4; return 5;
+}
+function spin(){
+  if(busy||S.spins<1)return;
+  busy=true;S.spins--;msg('');render();
+  const res=[pick(),pick(),pick()];
+  if(Math.random()<.12){const s=pick();res[0]=res[1]=res[2]=s;}
+  const els=[0,1,2].map(i=>$('r'+i));
+  els.forEach(e=>e.classList.add('spinning'));
+  const iv=setInterval(()=>els.forEach(e=>e.textContent=SYM[Math.floor(Math.random()*SYM.length)]),80);
+  els.forEach((e,i)=>setTimeout(()=>{e.classList.remove('spinning');e.textContent=SYM[res[i]];
+    if(i===2){clearInterval(iv);resolve(res);}},700+i*400));
+}
+function resolve(r){
+  const triple=r[0]===r[1]&&r[1]===r[2];
+  const m=S.village;
+  if(triple){
+    const s=r[0];
+    if(s===0){S.coins+=5000*m;msg('🪙🪙🪙 JACKPOT +'+(5000*m).toLocaleString('fr'));}
+    else if(s===1){S.spins=Math.min(MAX_SPINS,S.spins+8);msg('⚡ +8 tours !');}
+    else if(s===2){S.shield=Math.min(3,S.shield+3);msg('🛡️ Boucliers pleins');}
+    else if(s===3){const g=3000*m;S.coins+=g;msg('🔨 Attaque réussie ! +'+g.toLocaleString('fr'));}
+    else if(s===4){const g=4000*m;S.coins+=g;msg('🐷 Raid ! +'+g.toLocaleString('fr'));}
+    else{S.coins+=2000*m;S.spins=Math.min(MAX_SPINS,S.spins+3);msg('🦊 Bonus renard !');}
+  }else{
+    const c=r.filter(x=>x===0).length, e=r.filter(x=>x===1).length, sh=r.filter(x=>x===2).length;
+    let g=c*150*m+e*1+sh*0, t=[];
+    if(c){S.coins+=c*150*m;t.push('+'+(c*150*m)+' 🪙');}
+    if(e){S.spins=Math.min(MAX_SPINS,S.spins+e);t.push('+'+e+' ⚡');}
+    if(sh){S.shield=Math.min(3,S.shield+sh);t.push('+'+sh+' 🛡️');}
+    if(r.includes(3)&&!r.includes(0)){S.coins+=500*m;t.push('🔨 +'+(500*m)+' 🪙');}
+    msg(t.length?t.join('  '):'Pas de chance… retente !');
+  }
+  busy=false;save();render();
+}
+$('spinBtn').onclick=spin;
+setInterval(()=>{regen();render();save()},1000);
+regen();render();
+</script>
+</body>
+</html>
